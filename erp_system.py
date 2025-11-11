@@ -182,8 +182,10 @@ def generate_person_id() -> str:
 def generate_record_id(df: pd.DataFrame) -> str:
     max_id = 0
     if not df.empty and 'record_id' in df.columns:
-        ids = df['record_id'].str.extract(r'W(\d+)', expand=False).dropna().astype(int)
+        # Extract numeric part from existing record_ids
+        ids = df['record_id'].str.extract(r'W(\d+)', expand=False).dropna()
         if not ids.empty:
+            ids = ids.astype(int)
             max_id = ids.max()
     return f"W{max_id + 1:04d}"
 
@@ -425,24 +427,46 @@ def perform_bulk_upload(uploaded_file, by_user: str):
             return "Unsupported file type. Only CSV and XLSX allowed."
         
         required_cols = ['person_id', 'record_id', 'area', 'pp_sz', 'zone', 'cc_uc', 'role', 'name', 'cnic', 'phone', 'vehicle_id', 'vehicle_reg_no', 'supervisor_id', 'status', 'updated_on', 'status_changed_on', 'last_transfer_on', 'remarks']
+        
+        # Add missing columns with empty values
         for col in required_cols:
             if col not in upload_df.columns:
                 upload_df[col] = ''
         
         warnings = []
+        current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
         for idx, row in upload_df.iterrows():
+            # Auto-generate person_id if empty
             if row['person_id'] == '':
                 upload_df.at[idx, 'person_id'] = generate_person_id()
+            
+            # Auto-generate record_id if empty
+            if row['record_id'] == '':
+                upload_df.at[idx, 'record_id'] = generate_record_id(upload_df)
+            
+            # Set updated_on to current time if empty
+            if row['updated_on'] == '':
+                upload_df.at[idx, 'updated_on'] = current_time
+            
+            # Set remarks to "Bulk upload" if empty
+            if row['remarks'] == '':
+                upload_df.at[idx, 'remarks'] = 'Bulk upload'
+            
+            # Set status to active if empty
+            if row['status'] == '':
+                upload_df.at[idx, 'status'] = 'active'
+            
+            # Validations
             if not validate_cnic(row['cnic']):
                 warnings.append(f"Row {idx+1}: Invalid CNIC.")
             if not validate_phone(row['phone']):
                 warnings.append(f"Row {idx+1}: Invalid Phone.")
-            if row['updated_on'] == '':
-                upload_df.at[idx, 'updated_on'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         master_df = load_df(MASTER_CSV)
         atomic_append_df(master_df, upload_df, MASTER_CSV)
         
+        # Log actions for each row
         for idx, row in upload_df.iterrows():
             log_action(row['person_id'], row['record_id'], 'add', '', '', '', by_user, 'Bulk upload')
         
@@ -451,7 +475,7 @@ def perform_bulk_upload(uploaded_file, by_user: str):
         return ""
     except Exception as e:
         return f"Error: {str(e)}"
-
+        
 # Authentication
 def load_credentials() -> Dict:
     with open(CREDENTIALS_YAML, 'r') as f:
@@ -685,4 +709,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
