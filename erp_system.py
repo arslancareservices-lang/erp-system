@@ -180,10 +180,11 @@ def generate_person_id() -> str:
     return f"P{uuid.uuid4().hex[:8].upper()}"
 
 def generate_record_id(df: pd.DataFrame) -> str:
+    master_df = load_df(MASTER_CSV)  # Existing master file se ID generate karein
     max_id = 0
-    if not df.empty and 'record_id' in df.columns:
+    if not master_df.empty and 'record_id' in master_df.columns:
         # Extract numeric part from existing record_ids
-        ids = df['record_id'].str.extract(r'W(\d+)', expand=False).dropna()
+        ids = master_df['record_id'].str.extract(r'W(\d+)', expand=False).dropna()
         if not ids.empty:
             ids = ids.astype(int)
             max_id = ids.max()
@@ -422,7 +423,10 @@ def perform_bulk_upload(uploaded_file, by_user: str):
         if uploaded_file.name.endswith('.csv'):
             upload_df = pd.read_csv(uploaded_file, dtype=str, keep_default_na=False)
         elif uploaded_file.name.endswith('.xlsx'):
-            upload_df = pd.read_excel(uploaded_file, dtype=str)
+            # Excel file ke liye proper handling
+            upload_df = pd.read_excel(uploaded_file, dtype=str, keep_default_na=False)
+            # NaN values ko empty string se replace karein
+            upload_df = upload_df.fillna('')
         else:
             return "Unsupported file type. Only CSV and XLSX allowed."
         
@@ -438,29 +442,32 @@ def perform_bulk_upload(uploaded_file, by_user: str):
         
         for idx, row in upload_df.iterrows():
             # Auto-generate person_id if empty
-            if row['person_id'] == '':
+            if pd.isna(row['person_id']) or row['person_id'] == '':
                 upload_df.at[idx, 'person_id'] = generate_person_id()
             
             # Auto-generate record_id if empty
-            if row['record_id'] == '':
+            if pd.isna(row['record_id']) or row['record_id'] == '':
                 upload_df.at[idx, 'record_id'] = generate_record_id(upload_df)
             
             # Set updated_on to current time if empty
-            if row['updated_on'] == '':
+            if pd.isna(row['updated_on']) or row['updated_on'] == '':
                 upload_df.at[idx, 'updated_on'] = current_time
             
             # Set remarks to "Bulk upload" if empty
-            if row['remarks'] == '':
+            if pd.isna(row['remarks']) or row['remarks'] == '':
                 upload_df.at[idx, 'remarks'] = 'Bulk upload'
             
             # Set status to active if empty
-            if row['status'] == '':
+            if pd.isna(row['status']) or row['status'] == '':
                 upload_df.at[idx, 'status'] = 'active'
             
             # Validations
-            if not validate_cnic(row['cnic']):
+            cnic_value = str(row['cnic']) if not pd.isna(row['cnic']) else ''
+            phone_value = str(row['phone']) if not pd.isna(row['phone']) else ''
+            
+            if cnic_value and not validate_cnic(cnic_value):
                 warnings.append(f"Row {idx+1}: Invalid CNIC.")
-            if not validate_phone(row['phone']):
+            if phone_value and not validate_phone(phone_value):
                 warnings.append(f"Row {idx+1}: Invalid Phone.")
         
         master_df = load_df(MASTER_CSV)
@@ -709,5 +716,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
