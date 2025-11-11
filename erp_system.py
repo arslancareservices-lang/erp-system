@@ -593,7 +593,7 @@ def main():
                 zone = st.selectbox("Zone", zone_options)
                 cc_uc_options = [f"UC-{i:03d}" for i in range(131, 190)]
                 cc_uc = st.selectbox("CC/UC", cc_uc_options)
-            role = st.selectbox("Role", ['Sanitary Worker', 'Helper', 'Zonal Officer', 'Sanitary Supervisor', 'Driver', 'Cleaner', 'Data Entry Operator', 'Assistant Manager', 'Supervisor'])
+            role = st.selectbox("Role", ['Sanitary Worker', 'Helper', 'Zonal Officer', 'Driver', 'Cleaner', 'Data Entry Operator', 'Assistant Manager', 'Supervisor'])
             name = st.text_input("Name")
             cnic = st.text_input("CNIC (13 digits)")
             phone = st.text_input("Phone (11 digits)")
@@ -685,3 +685,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
