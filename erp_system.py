@@ -527,6 +527,7 @@ def login():
             st.error("Invalid credentials")
 
 # Main App
+# Main App
 def main():
     if 'user' not in st.session_state:
         login()
@@ -611,7 +612,7 @@ def main():
     
     elif page == "Admin Panel" and role == 'admin':
         st.title("Admin Panel")
-        tab = st.tabs(["Bulk Upload", "Add New", "Edit/Transfer/Remove"])
+        tab = st.tabs(["Bulk Upload", "Add New", "Edit/Transfer/Remove", "Remove All Data"])
         
         with tab[0]:
             st.subheader("Bulk Upload")
@@ -728,6 +729,28 @@ def main():
                                     st.success("Edited!")
                     else:
                         st.error("No active record for this person.")
+        
+        with tab[3]:
+            st.subheader("🚨 Remove All Data")
+            st.warning("**DANGER ZONE**: This will permanently delete ALL data from the system. This action cannot be undone!")
+            
+            st.write("**Instructions:**")
+            st.write("1. Enter the confirmation code: `REX9797`")
+            st.write("2. Click 'Remove All Data' button")
+            st.write("3. All workers, history, and records will be deleted")
+            
+            confirmation_code = st.text_input("Confirmation Code", type="password")
+            
+            if st.button("🚨 Remove All Data", type="secondary"):
+                if not confirmation_code:
+                    st.error("Please enter the confirmation code.")
+                else:
+                    result = remove_all_data(confirmation_code, user)
+                    if "successfully" in result.lower():
+                        st.success(result)
+                        st.info("The system has been reset to initial state. All data is removed.")
+                    else:
+                        st.error(result)
     
     elif page == "History" and role == 'admin':
         st.title("History")
