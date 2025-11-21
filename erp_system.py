@@ -438,7 +438,31 @@ def perform_edit(person_id: str, record_id: str, field: str, new_value: str, by_
     atomic_append_df(master_df, pd.DataFrame([new_row]), MASTER_CSV)
     log_action(person_id, new_record_id, 'edit', field, old_value, new_value, by_user, notes)
     return ""
-
+# YEH NAYA FUNCTION ADD KAREIN - LINE 400 KE AAS-PAAS
+def remove_all_data(confirmation_code: str, by_user: str) -> str:
+    """Remove all data with confirmation code"""
+    if confirmation_code != "REX9797":
+        return "Invalid confirmation code. Data deletion aborted."
+    
+    try:
+        # Clear master.csv (only keep header)
+        with open(MASTER_CSV, 'w', encoding='utf-8') as f:
+            f.write(MASTER_HEADER)
+        
+        # Clear history.csv (only keep header)
+        with open(HISTORY_CSV, 'w', encoding='utf-8') as f:
+            f.write(HISTORY_HEADER)
+        
+        # Log the action
+        log_action('SYSTEM', 'SYSTEM', 'remove_all', 'all_data', 'all', 'empty', by_user, 'All data removed by admin')
+        
+        # Sync to GitHub
+        sync_data_to_github()
+        
+        return "All data has been successfully removed. System reset to initial state."
+    except Exception as e:
+        return f"Error removing data: {str(e)}"
+        
 def perform_bulk_upload(uploaded_file, by_user: str):
     try:
         if uploaded_file.name.endswith('.csv'):
