@@ -1,0 +1,4 @@
+person_id,record_id,area,pp_sz,zone,cc_uc,role,name,cnic,phone,vehicle_id,vehicle_reg_no,supervisor_id,status,updated_on,status_changed_on,last_transfer_on,remarks
+P001,W001,City,PP-110,Zone-01,CC-001,Sanitary Worker,Bilal Ahmed,3520212345671,03001234567,,,W010,active,2025-11-01 00:00:00,,,
+P002,W002,City,PP-110,Zone-01,CC-001,Driver,Kamran Ali,3520298765439,03007654321,V-005,LEB1234,W010,active,2025-10-15 00:00:00,,,
+P003,W004,Sadar,SZ-06,Z-09,UC-140,Supervisor,Imran Khan,3520176543219,03001112222,,,,active,2025-11-05 00:00:00,,,
